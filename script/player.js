@@ -36,3 +36,4 @@ export class Player {
         // Optional: Add firing logic if needed
     }
 }
+
