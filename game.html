@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pong Game</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+</head>
+
+<body>
+
+    <div id="game">
+
+        <div id="score" role="status" aria-live="polite">
+
+            <span id="playerScore">0</span> - <span id="opponentScore">0</span>
+
+        </div>
+
+ 
+
+        <div id="player" class="player"></div>
+
+        <div id="opponent" class="player"></div>
+
+        <div id="ball"></div>
+
+ 
+
+        <div id="controls" aria-label="Game Controls">
+
+            <button id="up">Up</button>
+
+            <button id="down">Down</button>
+
+            <label>
+
+              <input type="checkbox" id="possessionToggle" checked>
+
+              Posesión automática después de anotar
+
+            </label>
+
+        </div>
+
+    </div>
+
+ 
+
+    <script src="Player.js"></script>
+
+    <script src="Ball.js"></script>
+
+    <script src="AI.js"></script>
+
+    <script src="game.js"></script>
+
+</body>
+
+</html>
+
+ 
+
+/* style.css */
+
+* {
+
+    margin: 0;
+
+    padding: 0;
+
+    box-sizing: border-box;
+
+}
+
+ 
+
+:root {
+
+    --bg-color: #282c34;
+
+    --game-bg: #1e1e1e;
+
+    --primary-color: #fff;
+
+    --accent-color: #ff5733;
+
+    --button-bg: #333;
+
+}
+
+ 
+
+body {
+
+    font-family: Arial, sans-serif;
+
+    background-color: var(--bg-color);
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    height: 100vh;
+
+    color: var(--primary-color);
+
+}
+
+ 
+
+#game {
+
+    position: relative;
+
+    width: 100%;
+
+    max-width: 600px;
+
+    height: 400px;
+
+    background-color: var(--game-bg);
+
+    border: 2px solid var(--primary-color);
+
+    overflow: hidden;
+
+}
+
+ 
+
+.player {
+
+    position: absolute;
+
+    width: 32px;
+
+    height: 128px;
+
+    background-color: var(--primary-color);
+
+    transition: top 0.05s linear;
+
+}
+
+ 
+
+#player { left: 0; }
+
+#opponent { right: 0; }
+
+ 
+
+#ball {
+
+    position: absolute;
+
+    width: 32px;
+
+    height: 32px;
+
+    background-color: var(--accent-color);
+
+    border-radius: 50%;
+
+    top: 50%;
+
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+}
+
+ 
+
+#score {
+
+    position: absolute;
+
+    top: 10px;
+
+    width: 100%;
+
+    text-align: center;
+
+    font-size: 24px;
+
+}
+
+ 
+
+#controls {
+
+    position: absolute;
+
+    bottom: 10px;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+}
+
+ 
+
+button {
+
+    padding: 10px;
+
+    font-size: 16px;
+
+    background-color: var(--button-bg);
+
+    border: none;
+
+    color: white;
+
+    cursor: pointer;
+
+    margin: 5px;
+
+}
+
+ 
+
+button:focus {
+
+    outline: none;
+
+}
+
+ 
+
+/* Player.js */
+
+class Player {
+
+    constructor(id, side) {
+
+        this.el = document.getElementById(id);
+
+        this.side = side;
+
+        this.aim = 0;
+
+        this.speed = 0;
+
+        this.position = [this.el.offsetLeft, this.el.offsetTop];
+
+    }
+
+ 
+
+    move(dy) {
+
+        const newY = this.el.offsetTop + dy;
+
+        const maxY = document.getElementById("game").offsetHeight - this.el.offsetHeight;
+
+        const clampedY = Math.max(0, Math.min(newY, maxY));
+
+        this.el.style.top = clampedY + "px";
+
+        this.position[1] = clampedY;
+
+    }
+
+ 
+
+    setAim(direction) {
+
+        this.aim = direction;
+
+    }
+
+ 
+
+    fire() {
+
+        if (ball.owner === this) {
+
+            ball.velocity = [this.side === "left" ? 0.5 : -0.5, this.aim * 0.5];
+
+            ball.owner = null;
+
+        }
+
+    }
+
+ 
+
+    getPosition() {
+
+        return [this.el.offsetLeft, this.el.offsetTop];
+
+    }
+
+ 
+
+    getSide() {
+
+        return this.side;
+
+    }
+
+}
+
+ 
+
+/* Ball.js */
+
+class Ball {
+
+    constructor() {
+
+        this.el = document.getElementById("ball");
+
+        this.reset();
+
+    }
+
+ 
+
+    reset(ownerSide = null, givePossession = false) {
+
+        if (givePossession) {
+
+            this.owner = ownerSide === "player" ? player : opponent;
+
+            this.velocity = [0, 0];
+
+            this.followOwner();
+
+        } else {
+
+            this.owner = null;
+
+            if (ownerSide === "player") {
+
+                this.position = [64, 200];
+
+                this.velocity = [0.5, (Math.random() - 0.5)];
+
+            } else if (ownerSide === "opponent") {
+
+                this.position = [504, 200];
+
+                this.velocity = [-0.5, (Math.random() - 0.5)];
+
+            } else {
+
+                this.position = [300, 200];
+
+                this.velocity = [Math.random() > 0.5 ? 0.5 : -0.5, (Math.random() - 0.5)];
+
+            }
+
+        }
+
+        this.updateVisual();
+
+    }
+
+ 
+
+    update(t) {
+
+        if (this.owner) {
+
+            this.followOwner();
+
+        } else {
+
+            this.position[0] += this.velocity[0] * t;
+
+            this.position[1] += this.velocity[1] * t;
+
+ 
+
+            const gameHeight = document.getElementById("game").offsetHeight;
+
+ 
+
+            if (this.position[1] <= 0 || this.position[1] >= gameHeight - 32) {
+
+                this.velocity[1] *= -1;
+
+            }
+
+        }
+
+        this.updateVisual();
+
+    }
+
+ 
+
+    followOwner() {
+
+        const ownerPos = this.owner.getPosition();
+
+        this.position[0] = this.owner.side === "left" ? ownerPos[0] + 64 : ownerPos[0] - 32;
+
+        this.position[1] = ownerPos[1] + 64;
+
+    }
+
+ 
+
+    updateVisual() {
+
+        this.el.style.left = this.position[0] + "px";
+
+        this.el.style.top = this.position[1] + "px";
+
+    }
+
+}
+
+ 
+
+/* AI.js */
+
+class AI {
+
+    constructor(playerToControl) {
+
+        this.ctl = playerToControl;
+
+        this.state = {
+
+            WAITING: 0,
+
+            FOLLOWING: 1,
+
+            AIMING: 2
+
+        };
+
+        this.currentState = this.state.FOLLOWING;
+
+    }
