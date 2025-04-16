@@ -6,6 +6,7 @@ const gameEl = document.getElementById('game');
 const playerEl = document.getElementById('player');
 const opponentEl = document.getElementById('opponent');
 const ballEl = document.getElementById('ball');
+const playButton = document.getElementById('play-button'); // Select the "Play" button
 
 const player = new Player(playerEl, 'left');
 const opponent = new Player(opponentEl, 'right');
@@ -57,11 +58,14 @@ window.toggleAutoPossession = function () {
   autoPossession = !autoPossession;
 };
 
-// Start game
-ball.reset(player);
-requestAnimationFrame(loop);
+// Function to start the game
+function startGame() {
+  ball.reset(player);
+  requestAnimationFrame(loop);
+}
 
+// Add event listener to the "Play" button
+playButton.addEventListener('click', startGame);
 
-// Export startGame and initializeGame if needed
+// Export startGame if needed
 window.startGame = startGame;
-window.initializeGame = initializeGame;
