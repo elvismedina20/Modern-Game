@@ -194,6 +194,91 @@ class Player {
   </code></pre>
 </section>
 
+  <section>
+  <h2>🎱 Ball Class: Movement, Reset, and Visual Updates</h2>
+  <p>
+    The <code>Ball</code> class handles everything about the ball's behavior: starting position, movement, bouncing logic, and syncing its position on screen.
+  </p>
+
+  <pre><code class="language-javascript">
+// Ball class definition
+class Ball {
+    constructor() {
+        this.el = ballEl;
+        if (!this.el) {
+            throw new Error("Ball element not found");
+        }
+        this.size = BALL_SIZE;
+        this.reset(null);
+    }
+
+    // Reset the ball to start position
+    reset(ownerInstance = null) {
+        this.owner = ownerInstance;
+        currentBallSpeed = INITIAL_BALL_SPEED;
+
+        if (this.owner) {
+            this.followOwner();
+            this.velocity = [0, 0];
+        } else {
+            this.x = (game.clientWidth - this.size) / 2;
+            this.y = (game.clientHeight - this.size) / 2;
+            const angle = (Math.random() * Math.PI / 2) - Math.PI / 4;
+            const directionX = Math.random() < 0.5 ? 1 : -1;
+            this.velocity = [
+                directionX * currentBallSpeed * Math.cos(angle),
+                currentBallSpeed * Math.sin(angle)
+            ];
+            this.owner = null;
+        }
+        this.updateVisual();
+    }
+
+    // Main update method for the ball
+    update(deltaTime) {
+        if (!gameRunning && !this.owner) return;
+
+        if (this.owner) {
+            this.followOwner();
+        } else {
+            this.x += this.velocity[0];
+            this.y += this.velocity[1];
+
+            // Bounce on top and bottom walls
+            if (this.y <= 0 || this.y >= game.clientHeight - this.size) {
+                this.y = Math.max(0, Math.min(this.y, game.clientHeight - this.size));
+                this.velocity[1] *= -1;
+            }
+        }
+        this.updateVisual();
+    }
+
+    // Follows the owner paddle when possessed
+    followOwner() {
+        if (!this.owner) return;
+        const ownerCenterY = this.owner.y + this.owner.height / 2;
+        this.y = ownerCenterY - this.size / 2;
+
+        this.x = this.owner.side === "left"
+            ? this.owner.width + 15
+            : game.clientWidth - this.owner.width - 15 - this.size;
+    }
+
+    // Reflect visual changes in the DOM
+    updateVisual() {
+        if (this.el) {
+            this.el.style.left = `${this.x}px`;
+            this.el.style.top = `${this.y}px`;
+        }
+    }
+}
+  </code></pre>
+
+  <p>
+    This class ensures the ball behaves realistically and stays in sync with its on-screen representation, making gameplay feel smooth and responsive.
+  </p>
+</section>
+
 
 </body>
 </html>
