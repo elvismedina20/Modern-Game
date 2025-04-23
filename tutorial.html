@@ -28,7 +28,37 @@
 <body>
 
   <div class="section">
-    <h1>Pong Game Foundation Setup</h1>
+    <h1>Game Development - A Web Game in an Hour(2025)</h1>
+
+  <h1>🏓 Welcome to the Classic Pong Game Tutorial!</h1>
+  <p>
+    Brought to you by <strong>Elvis Medina</strong> and <strong>Framber Rodriguez</strong>!
+  </p>
+
+  <p>
+    In this step-by-step guide, you’ll learn how to create one of the most legendary arcade games ever made—<strong>Pong</strong>—using <code>HTML5</code>, <code>CSS</code>, and <code>JavaScript</code>.
+    This tutorial is designed with beginners in mind, making it perfect if you're just starting out with game development or looking to sharpen your coding skills.
+  </p>
+
+  <p>
+    Together, we'll walk you through building a fully playable Pong game from scratch.
+    You'll learn how to:
+    <ul>
+      <li>Draw game elements with the <code>&lt;canvas&gt;</code> element</li>
+      <li>Control paddle movement with keyboard input</li>
+      <li>Detect collisions and keep score</li>
+      <li>Add fun extras like animations and sound effects</li>
+    </ul>
+  </p>
+
+  <p>
+    By the time you're done, not only will you have a finished game to show off—
+    you’ll also have a solid foundation in <strong>JavaScript game development</strong>.
+  </p>
+
+  <p><em>Let’s dive in and start coding!</em> 💻🔥</p>
+</section>
+    
     <h3>🧱 Foundation</h3>
     <p>
       This part of the code builds the foundation of the Pong game.
@@ -84,6 +114,86 @@ if (!game || !player1El || !player2El || !ballEl || !controlsEl || !startButton 
 }
     </code></pre>
   </div>
+
+  <section>
+  <h2>🎮 Player Class</h2>
+  <p>This part of the code defines how each player paddle works. It sets their size, speed, and movement rules. Player 1 and Player 2 can be controlled by the keyboard, or one can be an AI. It also includes logic for firing the ball into play when the spacebar is pressed. Think of this as giving each paddle its brain and personality. 🧠🕹️</p>
+
+  <pre><code>
+// 🎮 Player Class
+class Player {
+    constructor(id, side) {
+        this.el = document.getElementById(id);
+        if (!this.el) {
+            throw new Error(`Player element not found: ${id}`);
+        }
+        this.side = side;
+        this.height = PADDLE_HEIGHT;
+        this.width = PADDLE_WIDTH;
+        this.speed = PLAYER_SPEED;
+        this.y = (game.clientHeight - this.height) / 2;
+    }
+
+    update(deltaTime) {
+        let dy = 0;
+        if (!gameRunning) return;
+
+        if (gameMode === '1p') {
+            if (this.side === 'left') {
+                if (keysPressed['arrowup'] || keysPressed['w']) dy = -this.speed;
+                if (keysPressed['arrowdown'] || keysPressed['s']) dy = this.speed;
+            }
+        } else {
+            if (this.side === 'left') {
+                if (keysPressed['arrowup']) dy = -this.speed;
+                if (keysPressed['arrowdown']) dy = this.speed;
+            } else if (this.side === 'right') {
+                if (keysPressed['w']) dy = -this.speed;
+                if (keysPressed['s']) dy = this.speed;
+            }
+        }
+
+        if (dy !== 0) this.move(dy);
+        if (keysPressed[' '] && ball.owner === this) this.fire();
+    }
+
+    move(dy) {
+        const newY = this.y + dy;
+        const maxY = game.clientHeight - this.height;
+        this.y = Math.max(0, Math.min(newY, maxY));
+        this.el.style.top = `${this.y}px`;
+    }
+
+    fire() {
+        if (ball.owner === this) {
+            let angle = (Math.random() - 0.5) * Math.PI / 6;
+
+            if (gameMode === '1p' && this.side === "right" && player1) {
+                const playerCenterY = player1.y + player1.height / 2;
+                const paddleCenterY = this.y + this.height / 2;
+                const targetY = game.clientHeight / 2 + (playerCenterY - paddleCenterY) * 0.2;
+                const deltaY = targetY - (this.y + this.height / 2);
+                const targetAngle = Math.atan2(deltaY, game.clientWidth * 0.8);
+                angle = Math.max(-MAX_BOUNCE_ANGLE * 0.8, Math.min(targetAngle, MAX_BOUNCE_ANGLE * 0.8));
+            }
+
+            const directionX = this.side === "left" ? 1 : -1;
+            ball.velocity = [
+                directionX * currentBallSpeed * Math.cos(angle),
+                currentBallSpeed * Math.sin(angle)
+            ];
+
+            ball.owner = null;
+        }
+    }
+
+    getCenterY() {
+        return this.y + this.height / 2;
+    }
+}
+  </code></pre>
+</section>
+
 
 </body>
 </html>
