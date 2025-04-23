@@ -3,21 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <title>Game Development - A Web Game in an Hour</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f0f0f0;
+      color: #333;
+    }
+    .section {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    pre {
+      background: #222;
+      color: #0f0;
+      padding: 15px;
+      overflow-x: auto;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Pong Game Foundation Setup</h1>
 
-  <section>
-    <h2>📸 Project Screenshot</h2>
-    <img src="Screenshot 2025-04-23 113317.png">
-  </section>
+  <div class="section">
+    <h1>Pong Game Foundation Setup</h1>
+    <h3>🧱 Foundation</h3>
+    <p>
+      This part of the code builds the foundation of the Pong game.
+      It sets the size and speed of the paddles and ball, keeps track of the score,
+      checks if the game is running, and prepares everything needed for the game to start.
+      It also sets up the controls, tracks who’s playing, and gets things ready for smooth movement,
+      scoring, and winning. Think of it as the behind-the-scenes setup that makes the game work once you hit "play." 🎮⚙️
+    </p>
 
-      <h3> 🧱 Foundation
-     This part of the code builds the foundation of the Pong game.
-    // It sets the size and speed of the paddles and ball, keeps track of the score,
-    // checks if the game is running, and prepares everything needed for the game to start.
-    // It also sets up the controls, tracks who’s playing, and gets things ready for smooth movement,
-    // scoring, and winning. Think of it as the behind-the-scenes setup that makes the game work once you hit "play." 🎮⚙️</h3>
+    <h3>📄 JavaScript Setup Code:</h3>
+    <pre><code>
+// --- Game Constants --- 
+const PADDLE_HEIGHT = 100; 
+const PADDLE_WIDTH = 15; 
+const BALL_SIZE = 15;
+
+const PLAYER_SPEED = 6; 
+const MAX_BOUNCE_ANGLE = Math.PI / 4;
+
+const INITIAL_BALL_SPEED = 5; 
+const BALL_SPEED_INCREASE = 0.2;
+
+const WIN_PARTICLE_COUNT = 40;
+
+// --- Game State ---
+let player1, player2, ball, ai;
+let score = [0, 0]; 
+let lastUpdate = 0; 
+let gameRunning = false;
+
+let ballPossessionOnScore = true; 
+let keysPressed = {};
+
+let currentBallSpeed = INITIAL_BALL_SPEED; 
+let gameMode = '1p';
+
+let winScoreLimit = 10; 
+let pointsPerScoreValue = 1;
+
+let animationFrameId = null; 
+let framesSinceStart = 0;
+
+let lastScoreState = null;
+
+// --- Basic Element Check ---
+if (!game || !player1El || !player2El || !ballEl || !controlsEl || !startButton || 
+    !resetButton || !undoButton || !toggleMusicButton || !fullscreenButton || 
+    !musicSelect || !backgroundMusic || !homepageSection || 
+    !gameSection || !devlogSection) {
+
+    console.error("FATAL: One or more essential HTML elements not found! Check HTML IDs.");
+    return;
+}
+    </code></pre>
+  </div>
 
 </body>
 </html>
