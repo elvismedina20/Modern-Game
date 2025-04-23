@@ -200,85 +200,107 @@ class Player {
     The <code>Ball</code> class handles everything about the ball's behavior: starting position, movement, bouncing logic, and syncing its position on screen.
   </p>
 
-  <pre><code class="language-javascript">
-// Ball class definition
-class Ball {
-    constructor() {
-        this.el = ballEl;
-        if (!this.el) {
-            throw new Error("Ball element not found");
-        }
-        this.size = BALL_SIZE;
-        this.reset(null);
+    <section>
+  <h2>🤖 AI Class</h2>
+  <p>This part of the code defines how the AI-controlled paddle behaves. It predicts the ball’s movement, adjusts its speed, and decides when to react. The AI can be set to different difficulty levels, affecting its reaction time, speed, and prediction accuracy. This is like programming the AI’s "brain" to act like a real player! 🧠🤖</p>
+
+  <pre><code>
+// 🤖 AI Class
+class AI {
+    constructor(playerToControl) {
+        this.ctl = playerToControl;  // The player instance this AI controls
+        this.difficultyFactor = 0.7;  // Base difficulty (influences reaction and prediction)
+        this.reactionTimer = 0;  // Timer for AI reaction delay
+        this.reactionDelay = 150;  // How long AI waits before reacting (ms)
+        this.fireDelay = 500;  // How long AI waits before firing (ms)
+        this.fireTimer = 0;  // Timer for AI fire delay
+        this.predictiveError = 0.1;  // How much random error is added to prediction
+        this.maxSpeedMultiplier = 1.0;  // How much faster AI can move than base player speed
     }
 
-    // Reset the ball to start position
-    reset(ownerInstance = null) {
-        this.owner = ownerInstance;
-        currentBallSpeed = INITIAL_BALL_SPEED;
-
-        if (this.owner) {
-            this.followOwner();
-            this.velocity = [0, 0];
-        } else {
-            this.x = (game.clientWidth - this.size) / 2;
-            this.y = (game.clientHeight - this.size) / 2;
-            const angle = (Math.random() * Math.PI / 2) - Math.PI / 4;
-            const directionX = Math.random() < 0.5 ? 1 : -1;
-            this.velocity = [
-                directionX * currentBallSpeed * Math.cos(angle),
-                currentBallSpeed * Math.sin(angle)
-            ];
-            this.owner = null;
+    setDifficulty(level) {
+        switch(level) {
+            case 'easy':
+                this.difficultyFactor = 0.4;
+                this.reactionDelay = 300;
+                this.fireDelay = 800;
+                this.predictiveError = 0.3;
+                this.maxSpeedMultiplier = 1.0;
+                break;
+            case 'normal':
+                this.difficultyFactor = 0.7;
+                this.reactionDelay = 180;
+                this.fireDelay = 600;
+                this.predictiveError = 0.15;
+                this.maxSpeedMultiplier = 1.0;
+                break;
+            case 'hard':
+                this.difficultyFactor = 1.0;
+                this.reactionDelay = 100;
+                this.fireDelay = 400;
+                this.predictiveError = 0.08;
+                this.maxSpeedMultiplier = 1.2;
+                break;
+            case 'veryHard':
+                this.difficultyFactor = 1.3;
+                this.reactionDelay = 50;
+                this.fireDelay = 250;
+                this.predictiveError = 0.04;
+                this.maxSpeedMultiplier = 1.4;
+                break;
+            case 'impossible':
+                this.difficultyFactor = 1.8;
+                this.reactionDelay = 0;
+                this.fireDelay = 150;
+                this.predictiveError = 0.01;
+                this.maxSpeedMultiplier = 1.5;
+                break;
         }
-        this.updateVisual();
     }
 
-    // Main update method for the ball
     update(deltaTime) {
-        if (!gameRunning && !this.owner) return;
+        if (!gameRunning) return;
 
-        if (this.owner) {
-            this.followOwner();
-        } else {
-            this.x += this.velocity[0];
-            this.y += this.velocity[1];
-
-            // Bounce on top and bottom walls
-            if (this.y <= 0 || this.y >= game.clientHeight - this.size) {
-                this.y = Math.max(0, Math.min(this.y, game.clientHeight - this.size));
-                this.velocity[1] *= -1;
+        if (ball.owner === this.ctl) {
+            this.fireTimer += deltaTime;
+            if (this.fireTimer >= this.fireDelay) {
+                this.ctl.fire(); // Fire the ball
+                this.fireTimer = 0; // Reset fire timer
             }
+            return; // Stop here if AI owns the ball
+        } else {
+            this.fireTimer = 0; // Reset fire timer if AI doesn't own the ball
         }
-        this.updateVisual();
-    }
 
-    // Follows the owner paddle when possessed
-    followOwner() {
-        if (!this.owner) return;
-        const ownerCenterY = this.owner.y + this.owner.height / 2;
-        this.y = ownerCenterY - this.size / 2;
+        this.reactionTimer += deltaTime;
 
-        this.x = this.owner.side === "left"
-            ? this.owner.width + 15
-            : game.clientWidth - this.owner.width - 15 - this.size;
-    }
+        if (this.reactionTimer >= this.reactionDelay && ball.velocity[0] > 0) {
+            this.reactionTimer = 0; // Reset reaction timer
 
-    // Reflect visual changes in the DOM
-    updateVisual() {
-        if (this.el) {
-            this.el.style.left = `${this.x}px`;
-            this.el.style.top = `${this.y}px`;
+            const distanceToPaddle = game.clientWidth - this.ctl.width - 10 - ball.x;
+            const ballSpeedX = Math.max(Math.abs(ball.velocity[0]), 1);
+            const timeToReach = distanceToPaddle / ballSpeedX;
+            let predictedBallY = ball.y + ball.velocity[1] * timeToReach;
+
+            const errorAmount = (Math.random() - 0.5) * 2 * this.predictiveError * game.clientHeight;
+            predictedBallY += errorAmount;
+
+            if (predictedBallY < 0 || predictedBallY > game.clientHeight - ball.size) {
+                if (predictedBallY < 0) {
+                    predictedBallY = Math.abs(predictedBallY);
+                } else {
+                    predictedBallY = game.clientHeight - ball.size - Math.abs(predictedBallY - game.clientHeight);
+                }
+            }
+
+            const predictedSpeed = Math.min(ball.velocity[0] * this.maxSpeedMultiplier, this.ctl.speed);
+            if (predictedBallY > this.ctl.y + this.ctl.height / 2) {
+                this.ctl.move(predictedSpeed);
+            } else {
+                this.ctl.move(-predictedSpeed);
+            }
         }
     }
 }
   </code></pre>
-
-  <p>
-    This class ensures the ball behaves realistically and stays in sync with its on-screen representation, making gameplay feel smooth and responsive.
-  </p>
 </section>
-
-
-</body>
-</html>
