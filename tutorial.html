@@ -304,3 +304,208 @@ class AI {
 }
   </code></pre>
 </section>
+
+  <pre><code>
+// ⚽ Ball Class
+class Ball {
+    constructor() {
+        this.el = document.getElementById('ball');
+        if (!this.el) {
+            throw new Error('Ball element not found.');
+        }
+        this.size = BALL_SIZE;
+        this.x = game.clientWidth / 2 - this.size / 2;
+        this.y = game.clientHeight / 2 - this.size / 2;
+        this.velocity = [0, 0]; // [x, y] velocity of the ball
+        this.speed = BALL_SPEED; // Initial speed of the ball
+        this.owner = null; // Player who owns the ball (if any)
+        this.bounceFactor = 0.9; // How much the ball bounces off walls and paddles
+        this.angle = 0; // Angle of ball's trajectory
+    }
+
+    // Updates the ball's position and velocity based on its speed and direction
+    update(deltaTime) {
+        if (!gameRunning) return;
+
+        // Move the ball
+        this.x += this.velocity[0] * deltaTime;
+        this.y += this.velocity[1] * deltaTime;
+
+        // Check for collision with top and bottom walls
+        if (this.y <= 0 || this.y >= game.clientHeight - this.size) {
+            this.velocity[1] *= -this.bounceFactor; // Reverse the vertical direction
+            this.y = Math.max(0, Math.min(this.y, game.clientHeight - this.size)); // Prevent ball from going out of bounds
+        }
+
+        // Check for collision with paddles (left or right)
+        if (this.x <= PADDLE_WIDTH && player1.y < this.y + this.size && player1.y + player1.height > this.y) {
+            this.velocity[0] *= -this.bounceFactor;
+            let centerOffset = (this.y + this.size / 2) - (player1.y + player1.height / 2);
+            this.velocity[1] += centerOffset * 0.05;
+            this.x = PADDLE_WIDTH; // Prevent the ball from passing through the paddle
+            if (this.owner !== player1) this.owner = player1;
+        }
+
+        if (this.x >= game.clientWidth - PADDLE_WIDTH - this.size && player2.y < this.y + this.size && player2.y + player2.height > this.y) {
+            this.velocity[0] *= -this.bounceFactor;
+            let centerOffset = (this.y + this.size / 2) - (player2.y + player2.height / 2);
+            this.velocity[1] += centerOffset * 0.05;
+            this.x = game.clientWidth - PADDLE_WIDTH - this.size; // Prevent the ball from passing through the paddle
+            if (this.owner !== player2) this.owner = player2;
+        }
+
+        // Check for scoring (if ball goes past left or right)
+        if (this.x <= 0 || this.x >= game.clientWidth - this.size) {
+            this.reset(); // Reset the ball position after scoring
+        }
+
+        this.el.style.left = `${this.x}px`;
+        this.el.style.top = `${this.y}px`;
+    }
+
+    // Resets the ball position after a point is scored
+    reset() {
+        this.x = game.clientWidth / 2 - this.size / 2;
+        this.y = game.clientHeight / 2 - this.size / 2;
+        this.velocity = [0, 0];
+        this.owner = null; // No player owns the ball when reset
+    }
+
+    // Sets the ball's velocity based on angle and speed
+    setVelocity(angle, speed) {
+        this.velocity = [
+            speed * Math.cos(angle),
+            speed * Math.sin(angle)
+        ];
+    }
+}
+  </code></pre>
+</section>
+
+          function changeDifficulty(event) {
+                const difficulty = event.target.value;
+                // Only apply difficulty if in 1 player mode and AI object exists
+                if (ai && gameMode === '1p') {
+                    ai.setDifficulty(difficulty);
+                    updateInstructions(); // Update instructions to show current difficulty
+                }
+            }
+
+            // Updates the score display elements on the page.
+            function updateScoreDisplay() {
+                player1ScoreEl.textContent = score[0];
+                player2ScoreEl.textContent = score[1];
+            }
+
+            // Checks for collisions between the ball and the paddles.
+            function checkCollisions() {
+                // Only check collisions if game is running and ball is not owned
+                if (!gameRunning || ball.owner) return;
+
+                // Check collision with Player 1 (left paddle)
+                // Ball must be moving left (velocity[0] < 0)
+                // Ball's right edge must be past or at the paddle's right edge
+                // Ball's right edge must be before or at the paddle's left edge (prevents double collision)
+                // Ball must be vertically overlapping the paddle
+                if (ball.velocity[0] < 0 &&
+                    ball.x <= player1.el.offsetLeft + player1.width + ball.size / 2 &&
+                    ball.x >= player1.el.offsetLeft &&
+                    ball.y + ball.size > player1.y &&
+                    ball.y < player1.y + player1.height) {
+
+                    // Calculate where the ball hit the paddle relative to its center
+                    const intersectY = player1.getCenterY() - (ball.y + ball.size / 2);
+                    // Normalize the intersection point (-1 at top, 1 at bottom)
+                    const normalizedIntersectY = intersectY / (player1.height / 2);
+                    // Calculate bounce angle based on intersection point
+                    const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE;
+
+                    currentBallSpeed += BALL_SPEED_INCREASE; // Increase ball speed on hit
+
+                    // Set new ball velocity (reverse horizontal, apply bounce angle)
+                    ball.velocity[0] = currentBallSpeed * Math.cos(bounceAngle);
+                    ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); // Vertical velocity depends on angle
+
+                    // Adjust ball position slightly to prevent sticking
+                    ball.x = player1.el.offsetLeft + player1.width + 1;
+                }
+                // Check collision with Player 2 / AI (right paddle)
+                // Ball must be moving right (velocity[0] > 0)
+                // Ball's left edge must be past or at the paddle's left edge
+                // Ball's left edge must be before or at the paddle's right edge (prevents double collision)
+                // Ball must be vertically overlapping the paddle
+                else if (ball.velocity[0] > 0 &&
+                         ball.x + ball.size >= player2.el.offsetLeft - ball.size / 2 &&
+                         ball.x <= player2.el.offsetLeft + player2.width &&
+                         ball.y + ball.size > player2.y &&
+                         ball.y < player2.y + player2.height) {
+
+                    // Calculate where the ball hit the paddle relative to its center
+                    const intersectY = player2.getCenterY() - (ball.y + ball.size / 2);
+                    // Normalize the intersection point (-1 at top, 1 at bottom)
+                    const normalizedIntersectY = intersectY / (player2.height / 2);
+                    // Calculate bounce angle based on intersection point
+                    const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE;
+
+                    currentBallSpeed += BALL_SPEED_INCREASE; // Increase ball speed on hit
+
+                    // Set new ball velocity (reverse horizontal, apply bounce angle)
+                    ball.velocity[0] = -currentBallSpeed * Math.cos(bounceAngle); // Reverse horizontal direction
+                    ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); // Vertical velocity depends on angle
+
+                    // Adjust ball position slightly to prevent sticking
+                    ball.x = player2.el.offsetLeft - ball.size - 1;
+                }
+            }
+
+            // Checks if a player has scored a point.
+            function checkScored() {
+                // Only check if game is running, ball is not owned, and enough frames have passed since start/reset
+                if (!gameRunning || ball.owner || framesSinceStart < 5) return;
+
+                const gameWidth = game.clientWidth;
+                let scorer = 0; // 0 = no score, 1 = Player 1 scored, 2 = Player 2/AI scored
+
+                // Check if ball went past the left edge (Player 2/AI scores)
+                if (ball.x <= 0) {
+                    scorer = 2;
+                }
+                // Check if ball went past the right edge (Player 1 scores)
+                else if (ball.x + ball.size >= gameWidth) {
+                    scorer = 1;
+                }
+
+                // If a point was scored
+                if (scorer !== 0) {
+                    // Save the current score state for undo
+                    lastScoreState = { score: [...score], scorer: scorer };
+                    undoButton.disabled = false; // Enable undo button
+
+                    // Update the score
+                    if (scorer === 1) {
+                        score[0] += pointsPerScoreValue;
+                    } else { // scorer === 2
+                        score[1] += pointsPerScoreValue;
+                    }
+                    updateScoreDisplay(); // Update the score display on the page
+
+                    // Check if a player has reached the win limit
+                    if (score[0] >= winScoreLimit || score[1] >= winScoreLimit) {
+                        // Determine the winner's name
+                        const winnerName = score[0] >= winScoreLimit ? 'Player 1' : (gameMode === '1p' ? 'AI' : 'Player 2');
+                        const finalScoreMsg = `Final Score: ${score[0]} - ${score[1]}`;
+                        console.log(`${winnerName} wins! ${finalScoreMsg}`);
+
+                        // Trigger win animation
+                        triggerWinAnimation(scorer === 1 ? 'left' : 'right');
+
+                        // Pause the game loop and show the winner message
+                        pauseGameLoop(`${winnerName} wins! ${finalScoreMsg}`);
+                    } else {
+                        // If no one won, reset the ball for the next round
+                        // Determine who serves next based on the possession setting
+                        const server = ballPossessionOnScore ? (scorer === 1 ? player1 : player2) : null;
+                        ball.reset(server); // Reset ball, potentially giving possession to the server
+                    }
+                }
+            }
