@@ -116,8 +116,8 @@ if (!game || !player1El || !player2El || !ballEl || !controlsEl || !startButton 
   </div>
 
   <section>
-  <h2>🎮 Player Class</h2>
-  <p>This part of the code defines how each player paddle works. It sets their size, speed, and movement rules. Player 1 and Player 2 can be controlled by the keyboard, or one can be an AI. It also includes logic for firing the ball into play when the spacebar is pressed. Think of this as giving each paddle its brain and personality. 🧠🕹️</p>
+  <h2>🎮 Player Class: Paddle Power</h2>
+  <p>The Player class defines how each player's paddle operates. It sets the size, speed, and movement rules, giving each player a unique gameplay experience. Player 1 and Player 2 can be controlled using the keyboard, or one can be AI-controlled depending on the game mode. It also includes logic for firing the ball into play when the spacebar is pressed, adding an extra layer of control for the players. Think of this as giving each paddle its own brain and personality! 🧠🕹️</p>
 
   <pre><code>
 // 🎮 Player Class
@@ -195,14 +195,10 @@ class Player {
 </section>
 
   <section>
-  <h2>🎱 Ball Class: Movement, Reset, and Visual Updates</h2>
-  <p>
-    The <code>Ball</code> class handles everything about the ball's behavior: starting position, movement, bouncing logic, and syncing its position on screen.
-  </p>
 
     <section>
-  <h2>🤖 AI Class</h2>
-  <p>This part of the code defines how the AI-controlled paddle behaves. It predicts the ball’s movement, adjusts its speed, and decides when to react. The AI can be set to different difficulty levels, affecting its reaction time, speed, and prediction accuracy. This is like programming the AI’s "brain" to act like a real player! 🧠🤖</p>
+  <h2>🤖 AI Class: Mastering the Paddle</h2>
+  <p>The AI class defines how the computer-controlled paddle behaves in the game. It’s like programming the AI's "brain" to play pong! The AI predicts the ball’s movement, adjusts its speed, and decides when to react. Depending on the selected difficulty level, the AI’s reaction time, speed, and prediction accuracy change, making it either a formidable opponent or a beginner-level challenge. It’s all about making the AI feel as smart as a real player! ⚡️</p>
 
   <pre><code>
 // 🤖 AI Class
@@ -305,6 +301,11 @@ class AI {
   </code></pre>
 </section>
 
+ <section>
+  <h2>🎮 Ball Class: Movement, Reset, and Visual Updates</h2>
+  <p>The Ball class is responsible for everything related to the ball’s behavior. It takes care of the ball's starting position, its movement across the screen, and the bouncing logic when it hits the walls or paddles. Additionally, it ensures that the ball's position is correctly synced with its on-screen representation, allowing for smooth gameplay. Whether it's traveling across the screen or resetting after a point is scored, this class makes sure the ball behaves just like you'd expect in a real pong game! ⚽️💨</p>
+
+
   <pre><code>
 // ⚽ Ball Class
 class Ball {
@@ -382,130 +383,151 @@ class Ball {
   </code></pre>
 </section>
 
-          function changeDifficulty(event) {
-                const difficulty = event.target.value;
-                // Only apply difficulty if in 1 player mode and AI object exists
-                if (ai && gameMode === '1p') {
-                    ai.setDifficulty(difficulty);
-                    updateInstructions(); // Update instructions to show current difficulty
-                }
-            }
+<section>
+  <h2>🎮 Game Functions</h2>
 
-            // Updates the score display elements on the page.
-            function updateScoreDisplay() {
-                player1ScoreEl.textContent = score[0];
-                player2ScoreEl.textContent = score[1];
-            }
+  <section>
+  <h3>1. Change Difficulty 🎮</h3>
+  <p>This function adjusts the difficulty of the AI opponent based on the selected value. It’s a handy way to tweak the challenge and keep the game exciting, but it only applies in 1-player mode. Whether you're looking for an easy match or a tough challenge, this feature lets you control the level of intensity! ⚙️</p>
+</section>
 
-            // Checks for collisions between the ball and the paddles.
-            function checkCollisions() {
-                // Only check collisions if game is running and ball is not owned
-                if (!gameRunning || ball.owner) return;
+  <pre><code>
+function changeDifficulty(event) {
+    const difficulty = event.target.value;
+    // Only apply difficulty if in 1 player mode and AI object exists
+    if (ai && gameMode === '1p') {
+        ai.setDifficulty(difficulty);
+        updateInstructions(); // Update instructions to show current difficulty
+    }
+}
+  </code></pre>
 
-                // Check collision with Player 1 (left paddle)
-                // Ball must be moving left (velocity[0] < 0)
-                // Ball's right edge must be past or at the paddle's right edge
-                // Ball's right edge must be before or at the paddle's left edge (prevents double collision)
-                // Ball must be vertically overlapping the paddle
-                if (ball.velocity[0] < 0 &&
-                    ball.x <= player1.el.offsetLeft + player1.width + ball.size / 2 &&
-                    ball.x >= player1.el.offsetLeft &&
-                    ball.y + ball.size > player1.y &&
-                    ball.y < player1.y + player1.height) {
+ <section>
+  <h3>2. Update Score Display 🏆</h3>
+  <p>This function updates the score display on the page, keeping track of the current score for Player 1 and Player 2. It’s the heartbeat of the game, ensuring players always know where they stand and adding that competitive edge. Every point counts, and this function makes sure it's always visible! 🔥</p>
+</section>
 
-                    // Calculate where the ball hit the paddle relative to its center
-                    const intersectY = player1.getCenterY() - (ball.y + ball.size / 2);
-                    // Normalize the intersection point (-1 at top, 1 at bottom)
-                    const normalizedIntersectY = intersectY / (player1.height / 2);
-                    // Calculate bounce angle based on intersection point
-                    const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE;
+  <pre><code>
+function updateScoreDisplay() {
+    player1ScoreEl.textContent = score[0];
+    player2ScoreEl.textContent = score[1];
+}
+  </code></pre>
 
-                    currentBallSpeed += BALL_SPEED_INCREASE; // Increase ball speed on hit
+  <section>
+  <h3>3. Check Collisions ⚡️</h3>
+  <p>This function checks for collisions between the ball and the paddles. If the ball hits a paddle, it calculates the bounce angle and adjusts the ball's speed and direction, making the game feel dynamic and unpredictable. Every collision is an opportunity for the ball to speed up, adding intensity and challenge to each round! 💥</p>
+</section>
 
-                    // Set new ball velocity (reverse horizontal, apply bounce angle)
-                    ball.velocity[0] = currentBallSpeed * Math.cos(bounceAngle);
-                    ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); // Vertical velocity depends on angle
+  <pre><code>
+function checkCollisions() {
+    // Only check collisions if game is running and ball is not owned
+    if (!gameRunning || ball.owner) return;
 
-                    // Adjust ball position slightly to prevent sticking
-                    ball.x = player1.el.offsetLeft + player1.width + 1;
-                }
-                // Check collision with Player 2 / AI (right paddle)
-                // Ball must be moving right (velocity[0] > 0)
-                // Ball's left edge must be past or at the paddle's left edge
-                // Ball's left edge must be before or at the paddle's right edge (prevents double collision)
-                // Ball must be vertically overlapping the paddle
-                else if (ball.velocity[0] > 0 &&
-                         ball.x + ball.size >= player2.el.offsetLeft - ball.size / 2 &&
-                         ball.x <= player2.el.offsetLeft + player2.width &&
-                         ball.y + ball.size > player2.y &&
-                         ball.y < player2.y + player2.height) {
+    // Check collision with Player 1 (left paddle)
+    if (ball.velocity[0] < 0 &&
+        ball.x <= player1.el.offsetLeft + player1.width + ball.size / 2 &&
+        ball.x >= player1.el.offsetLeft &&
+        ball.y + ball.size > player1.y &&
+        ball.y < player1.y + player1.height) {
+        // Calculate where the ball hit the paddle relative to its center
+        const intersectY = player1.getCenterY() - (ball.y + ball.size / 2);
+        const normalizedIntersectY = intersectY / (player1.height / 2);
+        const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE;
+        
+        currentBallSpeed += BALL_SPEED_INCREASE; // Increase ball speed on hit
+        
+        // Set new ball velocity (reverse horizontal, apply bounce angle)
+        ball.velocity[0] = currentBallSpeed * Math.cos(bounceAngle);
+        ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); // Vertical velocity depends on angle
+        
+        // Adjust ball position slightly to prevent sticking
+        ball.x = player1.el.offsetLeft + player1.width + 1;
+    }
+    // Check collision with Player 2 / AI (right paddle)
+    else if (ball.velocity[0] > 0 &&
+             ball.x + ball.size >= player2.el.offsetLeft - ball.size / 2 &&
+             ball.x <= player2.el.offsetLeft + player2.width &&
+             ball.y + ball.size > player2.y &&
+             ball.y < player2.y + player2.height) {
+        // Calculate where the ball hit the paddle relative to its center
+        const intersectY = player2.getCenterY() - (ball.y + ball.size / 2);
+        const normalizedIntersectY = intersectY / (player2.height / 2);
+        const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE;
+        
+        currentBallSpeed += BALL_SPEED_INCREASE; // Increase ball speed on hit
+        
+        // Set new ball velocity (reverse horizontal, apply bounce angle)
+        ball.velocity[0] = -currentBallSpeed * Math.cos(bounceAngle); // Reverse horizontal direction
+        ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); // Vertical velocity depends on angle
+        
+        // Adjust ball position slightly to prevent sticking
+        ball.x = player2.el.offsetLeft - ball.size - 1;
+    }
+}
+  </code></pre>
 
-                    // Calculate where the ball hit the paddle relative to its center
-                    const intersectY = player2.getCenterY() - (ball.y + ball.size / 2);
-                    // Normalize the intersection point (-1 at top, 1 at bottom)
-                    const normalizedIntersectY = intersectY / (player2.height / 2);
-                    // Calculate bounce angle based on intersection point
-                    const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE;
+  <section>
+  <h3>4. Check Scored 🏆</h3>
+  <p>This function checks if a player has scored a point. When a point is scored, it updates the score, checks for a winner, and resets the ball if needed to start the next round. It’s a crucial part of keeping the game flowing smoothly and ensuring that the winner is always determined by the gameplay. Every time the ball crosses the goal line, it triggers a reset and brings excitement to the next round! ⚽️</p>
+</section>
 
-                    currentBallSpeed += BALL_SPEED_INCREASE; // Increase ball speed on hit
+  <pre><code>
+function checkScored() {
+    // Only check if game is running, ball is not owned, and enough frames have passed since start/reset
+    if (!gameRunning || ball.owner || framesSinceStart < 5) return;
 
-                    // Set new ball velocity (reverse horizontal, apply bounce angle)
-                    ball.velocity[0] = -currentBallSpeed * Math.cos(bounceAngle); // Reverse horizontal direction
-                    ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); // Vertical velocity depends on angle
+    const gameWidth = game.clientWidth;
+    let scorer = 0; // 0 = no score, 1 = Player 1 scored, 2 = Player 2/AI scored
 
-                    // Adjust ball position slightly to prevent sticking
-                    ball.x = player2.el.offsetLeft - ball.size - 1;
-                }
-            }
+    // Check if ball went past the left edge (Player 2/AI scores)
+    if (ball.x <= 0) {
+        scorer = 2;
+    }
+    // Check if ball went past the right edge (Player 1 scores)
+    else if (ball.x + ball.size >= gameWidth) {
+        scorer = 1;
+    }
 
-            // Checks if a player has scored a point.
-            function checkScored() {
-                // Only check if game is running, ball is not owned, and enough frames have passed since start/reset
-                if (!gameRunning || ball.owner || framesSinceStart < 5) return;
+    // If a point was scored
+    if (scorer !== 0) {
+        // Save the current score state for undo
+        lastScoreState = { score: [...score], scorer: scorer };
+        undoButton.disabled = false; // Enable undo button
 
-                const gameWidth = game.clientWidth;
-                let scorer = 0; // 0 = no score, 1 = Player 1 scored, 2 = Player 2/AI scored
+        // Update the score
+        if (scorer === 1) {
+            score[0] += pointsPerScoreValue;
+        } else { // scorer === 2
+            score[1] += pointsPerScoreValue;
+        }
+        updateScoreDisplay(); // Update the score display on the page
 
-                // Check if ball went past the left edge (Player 2/AI scores)
-                if (ball.x <= 0) {
-                    scorer = 2;
-                }
-                // Check if ball went past the right edge (Player 1 scores)
-                else if (ball.x + ball.size >= gameWidth) {
-                    scorer = 1;
-                }
+        // Check if a player has reached the win limit
+        if (score[0] >= winScoreLimit || score[1] >= winScoreLimit) {
+            const winnerName = score[0] >= winScoreLimit ? 'Player 1' : (gameMode === '1p' ? 'AI' : 'Player 2');
+            const finalScoreMsg = `Final Score: ${score[0]} - ${score[1]}`;
+            console.log(`${winnerName} wins! ${finalScoreMsg}`);
+            
+            // Trigger win animation
+            triggerWinAnimation(scorer === 1 ? 'left' : 'right');
 
-                // If a point was scored
-                if (scorer !== 0) {
-                    // Save the current score state for undo
-                    lastScoreState = { score: [...score], scorer: scorer };
-                    undoButton.disabled = false; // Enable undo button
+            // Pause the game loop and show the winner message
+            pauseGameLoop(`${winnerName} wins! ${finalScoreMsg}`);
+        } else {
+            // If no one won, reset the ball for the next round
+            const server = ballPossessionOnScore ? (scorer === 1 ? player1 : player2) : null;
+            ball.reset(server); // Reset ball, potentially giving possession to the server
+        }
+    }
+}
+  </code></pre>
 
-                    // Update the score
-                    if (scorer === 1) {
-                        score[0] += pointsPerScoreValue;
-                    } else { // scorer === 2
-                        score[1] += pointsPerScoreValue;
-                    }
-                    updateScoreDisplay(); // Update the score display on the page
+</section>
 
-                    // Check if a player has reached the win limit
-                    if (score[0] >= winScoreLimit || score[1] >= winScoreLimit) {
-                        // Determine the winner's name
-                        const winnerName = score[0] >= winScoreLimit ? 'Player 1' : (gameMode === '1p' ? 'AI' : 'Player 2');
-                        const finalScoreMsg = `Final Score: ${score[0]} - ${score[1]}`;
-                        console.log(`${winnerName} wins! ${finalScoreMsg}`);
+<section>
+  <h2>Wrapping Up 🎮</h2>
+  <p>Congratulations! You've just created a fully functional Web game that works seamlessly across PCs, smartphones, and tablets. 🎉 While it's ready to play, there’s always room for improvement and fine-tuning. For instance, on smartphones, the game might feel a bit cramped in portrait mode, so be sure to flip it into landscape orientation for a smoother experience. This game is just the beginning—think of it as a sneak peek into the endless possibilities of Web-based game development. The best part? The journey doesn’t end here! There’s always more room to level up, get creative, and expand on your project. Keep pushing the boundaries and let your imagination run wild. 🚀</p>
+</section>
 
-                        // Trigger win animation
-                        triggerWinAnimation(scorer === 1 ? 'left' : 'right');
 
-                        // Pause the game loop and show the winner message
-                        pauseGameLoop(`${winnerName} wins! ${finalScoreMsg}`);
-                    } else {
-                        // If no one won, reset the ball for the next round
-                        // Determine who serves next based on the possession setting
-                        const server = ballPossessionOnScore ? (scorer === 1 ? player1 : player2) : null;
-                        ball.reset(server); // Reset ball, potentially giving possession to the server
-                    }
-                }
-            }
